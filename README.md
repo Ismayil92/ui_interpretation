@@ -1,4 +1,4 @@
-# UI_INTERPRETATION
+# UI_INTERPRETATION AND OBJECT DETECTION
 
 UI_Interpretation is a ROS package used for:
  - User Interface interpretation of a specific domestic appliance using Deep Learning
