@@ -11,7 +11,7 @@ if __name__ == "__main__":
     bridge = CvBridge()
     VideoRaw = rospy.Publisher('/camera/rgb/image_raw', Image, queue_size=2)
     rate = rospy.Rate(1)
-    cam = cv.VideoCapture('/home/ismayil/catkin_ws/src/ui_interpretation/Data/images/video.avi')
+    cam = cv.VideoCapture(1)
     if(cam.isOpened()==False):
         print("Error opening video stream of file")
     while (cam.isOpened()):

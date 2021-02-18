@@ -8,8 +8,8 @@
 # WARNING! All changes made in this file will be lost!
 import rospy
 from std_msgs.msg import String
-from thesispro.msg import screen
-from thesispro.msg import WmState
+from ui_interpretation.msg import uiOutMsg
+from ui_interpretation.msg import WmState
 from PyQt5 import QtCore, QtGui, QtWidgets
 from enum import Enum
 
@@ -31,15 +31,14 @@ class Options(Enum):
 
 
 class Ui_MainWindow(object):
-    #digits information assigning to the LCDS
     def callbackUserInterface(self,data):
+        # Digits, Program, Option choiches coming from Computer Vision
         self.lcdKg.display(float(data.Kilogram))
         self.lcdTemp.display(float(data.temperature))
         self.lcdCentr.display(float(data.User_select_Rinse_Nums))
         self.lcdHour.display(float(data.User_Select_Delay_Time))
         self.lcdSpeed.display(float(data.Spin_speed))
-    #results of wash program, option, function identification
-    def callbackSymbolProgramOption(self,data):
+
         if data.NormalTM2L7 == True:
             self.chkbxNormalTM2L7.setChecked(True)
         else:
@@ -1222,8 +1221,7 @@ class Ui_MainWindow(object):
     #information receiver function
     def showInfo(self):
         if not rospy.is_shutdown():
-            coordinate_sub_digits = rospy.Subscriber("user_interface_info", screen, self.callbackUserInterface)
-            coordinate_symbol_program_option = rospy.Subscriber("symbol_program_option_info",screen,self.callbackSymbolProgramOption)
+            coordinate_sub_digits = rospy.Subscriber("ui_estimation", uiOutMsg, self.callbackUserInterface)
             wash_mash_ros_msg = rospy.Subscriber("wm_state",WmState,self.callbackRosMsg)
 
     def retranslateUi(self, MainWindow):
@@ -1319,9 +1317,9 @@ class Ui_MainWindow(object):
 
 if __name__ == "__main__":
     rospy.init_node("Washing_Machine_Info_Indicator", anonymous= True)
-    msg = screen() #reference for classification message
+    msg = uiOutMsg() #reference for classification message
     rosmsg = WmState() #reference for ros message
-    #rosmsg =
+
     import sys
     app = QtWidgets.QApplication(sys.argv)
     try:

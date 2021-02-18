@@ -1,18 +1,17 @@
 #!/usr/bin/env python
-
-import cv2 as cv 
-import rospy 
+import cv2 as cv
+import rospy
 import numpy as np
-import roslib 
+import roslib
 roslib.load_manifest('ui_interpretation')
-import tensorflow as tf 
+import tensorflow as tf
 from cv_bridge import CvBridge, CvBridgeError
 from ui_interpretation.msg import localizationMsg,uiOutMsg
 from sensor_msgs.msg import Image
 import os
 
 
-# Global Variables---------------------------------------------------------- 
+# Global Variables----------------------------------------------------------
 bridge = CvBridge()
 rgbImg = np.zeros([640,480],dtype = np.uint8)
 grayImg = np.zeros([640,480], dtype = np.uint8)
@@ -44,7 +43,7 @@ rSymbol6 = []
 rSymbol7 = []
 rSymbol8 = []
 rSymbol9 = []
-rSymbol10 = [] 
+rSymbol10 = []
 rSymbol11 = []
 rSymbol12 = []
 rSymbol13 = []
@@ -64,10 +63,11 @@ rProgram10 = []
 class SceneCoordinates:
     def __init__(self):
         print("Coordinates are being fetched now")
-        
+
     def sceneCoordCallback(self,data):
+        # This method used for setting ROIs on the scene image.
         global rHour1,rHour2,rHour3
-        global rCentr1,rCentr2,rCentr3,rCentr4 
+        global rCentr1,rCentr2,rCentr3,rCentr4
         global rKg1,rKg2
         global rTemp1,rTemp2
         global rSpeed
@@ -90,7 +90,7 @@ class SceneCoordinates:
         rTemp1 = [int(data.firsttempupleft[0]), int(data.firsttempupleft[1]), int(data.firsttempbottomleft[1]), int(data.firsttempupright[0])]
         rTemp2 = [int(data.secondtempupleft[0]), int(data.secondtempupleft[1]), int(data.secondtempbottomleft[1]), int(data.secondtempupright[0])]
         # Speed
-        rSpeed = [int(data.speedupleft[0]), int(data.speedupleft[1]), int(data.speedbottomleft[1]), int(data.speedupright[0])]   
+        rSpeed = [int(data.speedupleft[0]), int(data.speedupleft[1]), int(data.speedbottomleft[1]), int(data.speedupright[0])]
         # Symbols
         rSymbol1 = [int(data.s1upleft[0]), int(data.s1upleft[1]), int(data.s1bottomleft[1]), int(data.s1upright[0])]
         rSymbol2 = [int(data.s2upleft[0]), int(data.s2upleft[1]), int(data.s2bottomleft[1]), int(data.s2upright[0])]
@@ -116,50 +116,23 @@ class SceneCoordinates:
         rProgram8 = [int(data.prg8left[0]),int(data.prg8left[1]),int(data.prg9left[1]),int(data.prg8right[0])]
         rProgram9 = [int(data.prg9left[0]),int(data.prg9left[1]),int(data.prg10left[1]),int(data.prg9right[0])]
         rProgram10 = [int(data.prg10left[0]),int(data.prg10left[1]),int(data.prg11left[1]),int(data.prg10right[0])]
-    
-    def getROI(self):
-        # DIGITS
-        self.imCropHour1 = threshImg[rHour1[1]:rHour1[2],rHour1[0]:rHour1[3]]
-        self.imCropHour2 = threshImg[rHour2[1]:rHour2[2],rHour2[0]:rHour2[3]]
-        self.imCropHour3 = threshImg[rHour3[1]:rHour3[2],rHour3[0]:rHour3[3]]
-        self.imCropKg1 = threshImg[rKg1[1]:rKg1[2],rKg1[0]:rKg1[3]]
-        self.imCropKg2 = threshImg[rKg2[1]:rKg2[2],rKg2[0]:rKg2[3]]
-        self.imCropCentr1 = threshImg[rCentr1[1]:rCentr1[2],rCentr1[0]:rCentr1[3]]
-        self.imCropCentr2 = threshImg[rCentr2[1]:rCentr2[2],rCentr2[0]:rCentr2[3]]
-        self.imCropCentr3 = threshImg[rCentr3[1]:rCentr3[2],rCentr3[0]:rCentr3[3]]
-        self.imCropCentr4 = threshImg[rCentr4[1]:rCentr4[2],rCentr4[0]:rCentr4[3]]
-        self.imCropTemp1 = threshImg[rTemp1[1]:rTemp1[2],rTemp1[0]:rTemp1[3]]
-        self.imCropTemp2 = threshImg[rTemp2[1]:rTemp2[2],rTemp2[0]:rTemp2[3]]
-        self.imCropSpeed = threshImg[rSpeed[1]:rSpeed[2],rSpeed[0]:rSpeed[3]]
-        # PROGRAMS
-        """
-        imCropPrg1 = resimg[rProgram1[1]:rProgram1[2],rProgram1[0]:rProgram1[3]]
-        imCropPrg2 = resimg[rProgram2[1]:rProgram2[2],rProgram2[0]:rProgram2[3]]
-        imCropPrg3 = resimg[rProgram3[1]:rProgram3[2],rProgram3[0]:rProgram3[3]]
-        imCropPrg4 = resimg[rProgram4[1]:rProgram4[2],rProgram4[0]:rProgram4[3]]
-        imCropPrg5 = resimg[rProgram5[1]:rProgram5[2],rProgram5[0]:rProgram5[3]]
-        imCropPrg6 = resimg[rProgram6[1]:rProgram6[2],rProgram6[0]:rProgram6[3]]
-        imCropPrg7 = resimg[rProgram7[1]:rProgram7[2],rProgram7[0]:rProgram7[3]]
-        imCropPrg8 = resimg[rProgram8[1]:rProgram8[2],rProgram8[0]:rProgram8[3]]
-        imCropPrg9 = resimg[rProgram9[1]:rProgram9[2],rProgram9[0]:rProgram9[3]]
-        imCropPrg10 = resimg[rProgram10[1]:rProgram10[2],rProgram10[0]:rProgram10[3]]
-        """
+
 
     def checkStatus(self, rElement):
         # checking on/off status of program and symbols on the user interface
-        status = False    
-        croppedROI = threshImg[rElement[1]:rElement[2], rElement[0]:rElement[3]]        
+        status = False
+        croppedROI = threshImg[rElement[1]:rElement[2], rElement[0]:rElement[3]]
         contours, hierarchy = cv.findContours(croppedROI,cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
         contours = sorted(contours, key = cv.contourArea, reverse=True)[:10]
         try:
             perimeter = cv.arcLength(contours[0], True)
             if perimeter>10:
-                status = True 
+                status = True
             else:
-                status = False 
+                status = False
         except Exception as exc:
             print(exc)
-        
+
         return status
 
 class RosMessageSetting:
@@ -172,12 +145,12 @@ class RosMessageSetting:
         time = interpretation_results[3]
         spinSpeed = interpretation_results[4]
 
-        msg.User_select_Rinse_Nums = spin_number 
+        msg.User_select_Rinse_Nums = spin_number
         msg.Kilogram = kg
-        msg.temperature = temperatureWashing 
-        msg.User_Select_Delay_Time = time 
-        msg.Spin_speed = spinSpeed 
-        
+        msg.temperature = temperatureWashing
+        msg.User_Select_Delay_Time = time
+        msg.Spin_speed = spinSpeed
+
     def setRosMessageForProgram(self,msg,scene_coords):
         #checking whether program led is active or inactive
         if scene_coords.checkStatus(rProgram1) == True:
@@ -229,16 +202,16 @@ class RosMessageSetting:
         isS12_OnOff = scene_coords.checkStatus(rSymbol12)
         isS13_OnOff = scene_coords.checkStatus(rSymbol13)
 
-        msg.Washing = isS1_OnOff 
-        msg.Rinsing = isS2_OnOff 
-        msg.Spinning = isS3_OnOff 
-        msg.Steaming = isS5_OnOff 
-        msg.Steam_Anticrease = isS6_OnOff 
-        msg.ExtraRinse = isS7_OnOff 
-        msg.Night_Cycle = isS8_OnOff 
+        msg.Washing = isS1_OnOff
+        msg.Rinsing = isS2_OnOff
+        msg.Spinning = isS3_OnOff
+        msg.Steaming = isS5_OnOff
+        msg.Steam_Anticrease = isS6_OnOff
+        msg.ExtraRinse = isS7_OnOff
+        msg.Night_Cycle = isS8_OnOff
         msg.Prewash = isS9_OnOff
-        msg.Stain = isS10_OnOff 
-        msg.Economy = isS11_OnOff 
+        msg.Stain = isS10_OnOff
+        msg.Economy = isS11_OnOff
         if isS12_OnOff == False:
             msg.NormalTM2L7 = True
             msg.DailyTM2L7 = False
@@ -246,8 +219,8 @@ class RosMessageSetting:
         else:
             msg.NormalTM2L7 = False
             msg.DailyTM2L7 = True
-        msg.Low_Steam = False 
-        msg.Medium_Steam = False 
+        msg.Low_Steam = False
+        msg.Medium_Steam = False
         msg.Delay = True
 
 def preClassification(scene_coords,p_graph, p_label):
@@ -257,11 +230,11 @@ def preClassification(scene_coords,p_graph, p_label):
     temperature = {}
     hour = {}
     speed = {}
-    
+
     if scene_coords.checkStatus(rCentr1)==True:
-        centrifugation[0] = classification(rCentr1,p_graph, p_label)  
+        centrifugation[0] = classification(rCentr1,p_graph, p_label)
     else:
-        centrifugation[0] = 0 
+        centrifugation[0] = 0
     if scene_coords.checkStatus(rCentr2)==True:
         centrifugation[1] = classification(rCentr2,p_graph, p_label)
     else:
@@ -319,36 +292,39 @@ def preClassification(scene_coords,p_graph, p_label):
     interpretation_results = [spin_number,kg,temperatureWashing,time,spinSpeed]
     return interpretation_results
 
-def frameCallback(data): #Subscribing Video Frames
+def frameCallback(data):
+    #Subscribing Video Frames
     global rgbImg
     global grayImg
     global threshImg
     try:
         rgbImg = bridge.imgmsg_to_cv2(data,"bgr8")
-        grayImg = cv.cvtColor(rgbImg, cv.COLOR_BGR2GRAY)   
+        grayImg = cv.cvtColor(rgbImg, cv.COLOR_BGR2GRAY)
         blur = cv.GaussianBlur(grayImg,(3,3),0)
         #Otsu's thresholding after Gaussian filtering
-        ret3,threshImg = cv.threshold(blur,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU)     
+        ret3,threshImg = cv.threshold(blur,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU)
     except CvBridgeError as e:
         print(e)
 
-def load_labels(label_file): #loading labels
+def load_labels(label_file):
+    #loading labels
     label = []
     proto_as_ascii_lines = tf.io.gfile.GFile(label_file).readlines()
     for l in proto_as_ascii_lines:
         label.append(l.rstrip())
     return label
 
-def load_graph(model_file): #loading the graph file
+def load_graph(model_file):
+    #loading the graph file
     graph = tf.Graph()
     graph_def = tf.compat.v1.GraphDef()
-    
+
     with open(model_file, "rb") as f:
         graph_def.ParseFromString(f.read())
     with graph.as_default():
         tf.import_graph_def(graph_def)
     return graph
-    
+
 def read_tensor_from_image_file(
         image,
         input_height=g_input_height,
@@ -365,7 +341,7 @@ def read_tensor_from_image_file(
     normalized = tf.divide(tf.subtract(resized, [input_mean]), [input_std])
     sess = tf.compat.v1.Session()
     result = sess.run(normalized)
-    return result    
+    return result
 
 def classification(rElement,graph,label):
     croppedROI = threshImg[rElement[1]:rElement[2], rElement[0]:rElement[3]]
@@ -412,15 +388,14 @@ def classification(rElement,graph,label):
     return reply
 
 
-    
+
 
 if __name__ == "__main__":
-    # Topic for subscribing images
-    imageTopic = "/camera/color/image_raw"
-    # Topic for subscribing scene coordinates
-    coordSubTopic = "/scene_coords"
+
     # Path for neural network to load
-    path_to_project = "/home/ismayil/catkin_ws/src/ui_interpretation/"
+    abs_drc = os.path.abspath(__file__)
+    path_to_scripts_ind = abs_drc.find('script')
+    path_to_project = abs_drc[0:path_to_scripts_ind]
     model_file = os.path.join(path_to_project, 'Data/graph/frozen_mobilenetV2_10_96_gray.pb')
     label_file = os.path.join(path_to_project, 'Data/graph/labels.txt')
     # Initialize ROS
@@ -428,30 +403,27 @@ if __name__ == "__main__":
     rate = rospy.Rate(5)
     scene_coord = SceneCoordinates()
     uiScreenMsg = uiOutMsg()
+    # Topic for subscribing images
+    imageTopic = "/camera/color/image_raw"
+    # Topic for subscribing scene coordinates
+    coordSubTopic = "/scene_coords"
+    # ROS Subscriber and Publisher
     image_sub = rospy.Subscriber(imageTopic, Image, frameCallback, queue_size=1)
     roi_sub = rospy.Subscriber(coordSubTopic,localizationMsg, scene_coord.sceneCoordCallback, queue_size=1)
-    ui_pub = rospy.Publisher("ui_estimation", uiOutMsg, queue_size=1)  
+    ui_pub = rospy.Publisher("ui_estimation", uiOutMsg, queue_size=1)
     # Graph file and labels are loaded
-    tf.compat.v1.disable_eager_execution() 
+    tf.compat.v1.disable_eager_execution()
     graph = load_graph(model_file)
-    labels = load_labels(label_file)       
+    labels = load_labels(label_file)
     while not rospy.is_shutdown():
-        print(rHour1)
         interpretation_results = preClassification(scene_coord,graph,labels)
         RosMessageSetting().setRosMessageForDigit(uiScreenMsg,interpretation_results)
         RosMessageSetting().setRosMessageForSymbols(uiScreenMsg,scene_coord)
         RosMessageSetting().setRosMessageForProgram(uiScreenMsg,scene_coord)
-        #RosMessageSetting().setRosMessageForOption(uiScreenMsg,scene_coord)
+        #  RosMessageSetting().setRosMessageForOption(uiScreenMsg,scene_coord)
+       
+        
         ui_pub.publish(uiScreenMsg)
-        rate.sleep()        
+        rate.sleep()
     cv.release()
     cv.destroyAllWindows()
-    
-
-
-
-
-
-    #roi_scene.corners[number of element, number of corners, always zero, x or y]
-    #rHour1 = [int(roi_scene.hour_corners[0,0,0,0]),int(roi_scene.hour_corners[0,0,0,1]),int(roi_scene.hour_corners[0,3,0,1]),int(roi_scene.hour_corners[0,1,0,0])]
-    #imCropHour1 = rgbImg[rHour1[1]:rHour1[2],rHour1[0]:rHour1[3]]

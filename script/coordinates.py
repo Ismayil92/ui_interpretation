@@ -1,5 +1,5 @@
-import numpy as np 
-from enum import Enum 
+import numpy as np
+from enum import Enum
 
 class Symbols(Enum):
     WASHING = 0
@@ -31,7 +31,7 @@ class Options(Enum):
     ACLARADO = 0
     CENTRIF = 1
     DRENAR = 2
-    
+
 
 class des_coordinates: #Desired coordinates on the model image [x,y,width,height]
     #Digits
@@ -39,13 +39,13 @@ class des_coordinates: #Desired coordinates on the model image [x,y,width,height
     [1215,114,61,100],
     [1279,114,61,100]], dtype=np.int32)
 
-    kg_coord = np.array([[713,123,760-713,75],
-    [760,123,760-713,75]],dtype=np.int32)
-   
-    temp_coord = np.array([[740,338,784-740,408-338],
-    [784,338,784-740,408-338]],dtype=np.int32)
+    kg_coord = np.array([[713,123,57,75],
+    [760,123,57,75]],dtype=np.int32)
 
-    centr_coord = np.array([[859,338,887-859,70],
+    temp_coord = np.array([[740,338,44,70],
+    [784,338,44,70]],dtype=np.int32)
+
+    centr_coord = np.array([[859,338,28,70],
     [887,338,44,70],
     [887+44,338,44,70],
     [887+2*44,338,44,70]],dtype=np.int32)
@@ -65,8 +65,8 @@ class des_coordinates: #Desired coordinates on the model image [x,y,width,height
     stain_coord = np.array([[1109,339,72,68]],dtype=np.int32)
     eco_coord = np.array([[1253,214,80,40]],dtype=np.int32)
     dailysuperquick_coord = np.array([[1200,258,66,70]],dtype=np.int32)
-    symbol13_coord = np.array([[1265,254,70,74]],dtype=np.int32)   
-   
+    symbol13_coord = np.array([[1265,254,70,74]],dtype=np.int32)
+
     symbol_coords = np.array([
         washing_coord,
         rinsing_coord,
@@ -79,9 +79,9 @@ class des_coordinates: #Desired coordinates on the model image [x,y,width,height
         prewash_coord,
         stain_coord,
         eco_coord,
-        dailysuperquick_coord, 
+        dailysuperquick_coord,
         symbol13_coord]).squeeze()
-    
+
     #Program
     algod_coord = np.array([[286,111,22,44]],dtype=np.int32)
     sinteticos_coord = np.array([[286,157,22,44]],dtype=np.int32)
@@ -127,12 +127,12 @@ class DesiredROIs:
     centr_corners = np.empty((4,4,1,2), dtype = np.float32)
     speed_corners = np.empty((1,4,1,2), dtype = np.float32)
     #symbol ROI
-    symbol_corners = np.empty((13,4,1,2), dtype = np.float32) 
+    symbol_corners = np.empty((13,4,1,2), dtype = np.float32)
     #Program ROI
-    program_corners = np.empty((10,4,1,2), dtype = np.float32)   
-    #Option ROI 
+    program_corners = np.empty((10,4,1,2), dtype = np.float32)
+    #Option ROI
     option_corners = np.empty((3,4,1,2), dtype = np.float32)
- 
+
     #Kilogram
     for i in range(2): #element
         for j in range(4): #corners
@@ -153,7 +153,7 @@ class DesiredROIs:
                     kg_corners[i,j,0,k] = float(dc.kg_coord[i,0])
                 if j==3 and k==1:
                     kg_corners[i,j,0,k] = float(dc.kg_coord[i,1])+float(dc.kg_coord[i,3])
-    #Hour 
+    #Hour
     for i in range(3): #element
         for j in range(4): #corners
             for k in range(2): #x or y
@@ -173,7 +173,7 @@ class DesiredROIs:
                     hour_corners[i,j,0,k] = float(dc.hour_coord[i,0])
                 if j==3 and k==1:
                     hour_corners[i,j,0,k] = float(dc.hour_coord[i,1])+float(dc.hour_coord[i,3])
-    #Temperature 
+    #Temperature
     for i in range(2): #element
         for j in range(4): #corners
             for k in range(2): #x or y
@@ -273,7 +273,7 @@ class DesiredROIs:
                     program_corners[i,j,0,k] = float(dc.program_coords[i,0])
                 if j==3 and k==1:
                     program_corners[i,j,0,k] = float(dc.program_coords[i,1])+float(dc.program_coords[i,3])
-    #Options 
+    #Options
     for i in range(3): #element
         for j in range(4): #corners
             for k in range(2): #x or y
@@ -293,11 +293,11 @@ class DesiredROIs:
                     option_corners[i,j,0,k] = float(dc.option_coords[i,0])
                 if j==3 and k==1:
                     option_corners[i,j,0,k] = float(dc.option_coords[i,1])+float(dc.option_coords[i,3])
-    
-  
+
+
 class SceneCoordinates:
     def __init__(self):
-        self.scene_hour_corners = np.empty((4,1,2), dtype = np.float32) 
+        self.scene_hour_corners = np.empty((4,1,2), dtype = np.float32)
     def set_ROI(self,coord):
         self.scene_hour_corners = list(coord)
         return self.scene_hour_corners

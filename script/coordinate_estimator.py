@@ -1,19 +1,18 @@
 #!/usr/bin/env python
-
-from __future__ import print_function 
+from __future__ import print_function
 import cv2 as cv
-import numpy as np 
-import rospy 
+import numpy as np
+import rospy
 import os
-from sensor_msgs.msg import Image 
-from cv_bridge import CvBridge, CvBridgeError 
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge, CvBridgeError
 from enum import Enum
 from coordinates import *
 from ui_interpretation.msg import localizationMsg
 
 
 
-#Global Variables 
+#Global Variables
 bridge = CvBridge()
 rgbImg = np.zeros([640,480],dtype = np.uint8)
 grayImg = np.zeros([640,480], dtype = np.uint8)
@@ -24,7 +23,7 @@ H = np.empty((3,3), dtype = np.float32)
 
 
 def openRefImages(image_name):
-    global refRGBImg 
+    global refRGBImg
     global refGrayImg
     abs_drc = os.path.abspath(__file__)
     path_to_scripts_ind = abs_drc.find('script')
@@ -35,23 +34,31 @@ def openRefImages(image_name):
             print('Could not open or find the image!')
             exit(0)
     refGrayImg = cv.cvtColor(refRGBImg,cv.COLOR_BGR2GRAY)
-    
-    
+
+
 
 def frameCallback(data): #Subscribing Video Frames
     global rgbImg
     global grayImg
     try:
         rgbImg = bridge.imgmsg_to_cv2(data,"bgr8")
-        grayImg = cv.cvtColor(rgbImg, cv.COLOR_BGR2GRAY)        
+        grayImg = cv.cvtColor(rgbImg, cv.COLOR_BGR2GRAY)
+        circles = cv.HoughCircles(grayImg, cv.HOUGH_GRADIENT,1,30,param1=50,param2=30, minRadius=10, maxRadius=30)
+        if circles is not None:
+		circles = np.uint16(np.round(circles))
+		for pt in circles[0,:]:
+		    x_center, y_center, r = pt[0], pt[1], pt[2]
+		    cv.circle(rgbImg,(x_center,y_center),r,(0,255,0),2)
+        
+        
     except CvBridgeError as e:
         print(e)
 
 
 class SURF_detector:
-    _min_hessian = 400  
-    _lowe_ratio_thresh = 0.75     
-    
+    _min_hessian = 400
+    _lowe_ratio_thresh = 0.75
+
     def __init__(self):
         self.detector = cv.xfeatures2d.SURF_create(hessianThreshold=SURF_detector._min_hessian)
         self.keypoints_ref, self.descriptors_ref = self.detector.detectAndCompute(refGrayImg,None)
@@ -66,8 +73,8 @@ class SURF_detector:
             knn_matches = self.matcher.knnMatch(self.descriptors_ref, descriptors_scene, 2)
         except:
             print("Error occured in knn matching")
-        #  Filter matches using the Lowe's ratio test to eliminate outliers 
-        good_matches = [] 
+        #  Filter matches using the Lowe's ratio test to eliminate outliers
+        good_matches = []
         for m,n in knn_matches:
             if m.distance < SURF_detector._lowe_ratio_thresh * n.distance:
                 good_matches.append(m)
@@ -81,14 +88,14 @@ class SURF_detector:
             scene[i,0] = keypoints_scene[good_matches[i].trainIdx].pt[0]
             scene[i,1] = keypoints_scene[good_matches[i].trainIdx].pt[1]
 
-        # to find Homography Matrix 
+        # to find Homography Matrix
         global H
         try:
             H, maskMatrix = cv.findHomography(obj, scene, cv.RANSAC)
             matches_mask = maskMatrix.ravel().tolist()
         except Exception as ex:
-            print(ex)   
-        return H    
+            print(ex)
+        return H
 
 def perspectiveTransform(ROI_in,H):
     ROI_scene = np.empty_like(ROI_in)
@@ -101,7 +108,7 @@ def perspectiveTransform(ROI_in,H):
 
 def drawROI(ROI_scene,img_scene):
     color = (0,255,0)
-    depth = 2 
+    depth = 2
     for i in range(ROI_scene.shape[0]):
         out_scene = cv.polylines(img_scene,[np.int32(ROI_scene[i])],True,color,depth)
     return out_scene
@@ -109,18 +116,19 @@ def drawROI(ROI_scene,img_scene):
 
 if __name__ == "__main__":
     rospy.init_node('coordinate_estimator',anonymous=True)
+    print("basladiq")
     rate = rospy.Rate(15)
-    imageTopic = "/camera/color/image_raw"  
+    imageTopic = "/camera/color/image_raw"
     coordPubTopic = "scene_coords"
     image_sub = rospy.Subscriber(imageTopic, Image, frameCallback, queue_size=1) #image subscriber
-    coord_pub = rospy.Publisher(coordPubTopic, localizationMsg, queue_size=10) #scene coordiniates publisher
-    openRefImages("refRGBImage.jpg") 
+    coord_pub = rospy.Publisher(coordPubTopic, localizationMsg, queue_size=1) #scene coordiniates publisher
+    openRefImages("refRGBImage.jpg")
     surf = SURF_detector()
-    refCorners = DesiredROIs()   
+    refCorners = DesiredROIs()
     scene_coords = localizationMsg()
     while not rospy.is_shutdown():
-        H = surf.compute()                
-        # Perspective Transform 
+        H = surf.compute()
+        # Perspective Transform
         hour_coord_scene = perspectiveTransform(refCorners.hour_corners, H)
         kg_coord_scene = perspectiveTransform(refCorners.kg_corners, H)
         temp_coord_scene = perspectiveTransform(refCorners.temp_corners, H)
@@ -137,8 +145,8 @@ if __name__ == "__main__":
         sceneRGBImg = drawROI(speed_coord_scene,rgbImg)
         sceneRGBImg = drawROI(symbol_coord_scene,rgbImg)
         sceneRGBImg = drawROI(program_coord_scene,rgbImg)
-        sceneRGBImg = drawROI(option_coord_scene,rgbImg)       
-        #Publish the scene coordinates          
+        sceneRGBImg = drawROI(option_coord_scene,rgbImg)
+        #Publish the scene coordinates
         hour_coord_scene = np.asarray(hour_coord_scene,dtype=np.uint32).squeeze().tolist()
         kg_coord_scene = np.asarray(kg_coord_scene,dtype=np.uint32).squeeze().tolist()
         temp_coord_scene = np.asarray(temp_coord_scene,dtype=np.uint32).squeeze().tolist()
@@ -203,7 +211,7 @@ if __name__ == "__main__":
         scene_coords.fourthcentrupright = centrif_coord_scene[3][1]
         scene_coords.fourthcentrbottomright = centrif_coord_scene[3][2]
         scene_coords.fourthcentrbottomleft = centrif_coord_scene[3][3]
-        #speed Message 
+        #speed Message
         scene_coords.speedupright = speed_coord_scene[0]
         scene_coords.speedupright = speed_coord_scene[1]
         scene_coords.speedbottomright = speed_coord_scene[2]
@@ -275,7 +283,7 @@ if __name__ == "__main__":
         scene_coords.s13bottomleft = symbol_coord_scene[12][3]
         scene_coords.s13bottomright = symbol_coord_scene[12][2]
 
-        # Program and Options 
+        # Program and Options
         scene_coords.prg1left = program_coord_scene[0][0]
         scene_coords.prg1right = program_coord_scene[0][1]
         scene_coords.prg2left = program_coord_scene[0][3]
@@ -324,9 +332,10 @@ if __name__ == "__main__":
         scene_coords.prg10left = program_coord_scene[9][0]
         scene_coords.prg10right = program_coord_scene[9][1]
         scene_coords.prg11left = program_coord_scene[9][3]
-        scene_coords.prg11right = program_coord_scene[9][2]       
-        
+        scene_coords.prg11right = program_coord_scene[9][2]
+
         coord_pub.publish(scene_coords)
+        print(scene_coords)
         #Visualize the video
         cv.namedWindow("scene image")
         cv.imshow("scene image",sceneRGBImg)
@@ -334,13 +343,3 @@ if __name__ == "__main__":
         rate.sleep()
     cv.release()
     cv.destroyAllWindows()
-        
-
-
-
-
-
-
-
-
-
